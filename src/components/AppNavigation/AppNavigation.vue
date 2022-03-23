@@ -146,6 +146,7 @@ export default {
 	position: -webkit-sticky;
 	top: $header-height;
 	left: 0;
+	padding: 8px 12px;
 	// Above appcontent
 	z-index: 1800;
 	height: calc(100vh - #{$header-height});
