@@ -72,8 +72,7 @@ For the multiselect component, all events will be passed through. Please see the
 					:disabled="disabled"
 					:class="{ focusable: isFocusable }"
 					class="action-input__multi"
-					v-bind="$attrs"
-					v-on="$listeners" />
+					v-bind="$attrs" />
 
 				<template v-else>
 					<input :id="id" type="submit" class="action-input__submit">
@@ -169,6 +168,13 @@ export default {
 			default: '',
 		},
 	},
+
+	emits: [
+		'input',
+		'submit',
+		'change',
+		'update:value',
+	],
 
 	computed: {
 		isIconUrl() {
@@ -282,7 +288,7 @@ $input-margin: 4px;
 
 	font-weight: normal;
 
-	&::v-deep .material-design-icon {
+	&:deep(.material-design-icon) {
 		width: $clickable-area;
 		height: $clickable-area;
 		opacity: $opacity_full;

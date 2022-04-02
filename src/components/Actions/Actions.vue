@@ -133,19 +133,17 @@ export default {
 </docs>
 <template>
 	<!-- if only one action, check if we need to bind to click or not -->
-	<element v-if="isValidSingleAction && !forceMenu"
-		v-tooltip.auto="firstAction.text"
-		v-bind="firstActionBinding"
+	<component :is="firstActionTag"
+		v-if="isValidSingleAction && !forceMenu"
+		v-tooltip.auto="firstActionText"
+		v-bind="{...$attrs, ...actions[0].props}"
 		:class="{
-			[firstAction.icon]: firstAction.icon,
-			[firstActionClass]: firstActionClass,
 			'action-item--single--with-title': singleActionTitle }"
 		class="action-item action-item--single"
 		rel="nofollow noreferrer noopener"
 		:disabled="isDisabled"
 		@focus="onFocus"
-		@blur="onBlur"
-		@[firstActionEventBinding]="execFirstAction">
+		@blur="onBlur">
 		<!-- Render the icon slot content of the first action -->
 		<VNodes :vnodes="firstActionIconSlot" />
 
@@ -156,7 +154,7 @@ export default {
 			<!-- @slot All action elements passed into the default slot will be used -->
 			<slot />
 		</span>
-	</element>
+	</component>
 
 	<!-- more than one action -->
 	<div v-else
@@ -164,11 +162,11 @@ export default {
 		:class="{'action-item--open': opened}"
 		class="action-item">
 		<!-- If more than one action, create a popovermenu -->
-		<Popover :delay="0"
+		<Popover v-model:shown="opened"
+			:delay="0"
 			:handle-resize="true"
-			:open.sync="opened"
 			:placement="placement"
-			:boundaries-element="boundariesElement"
+			:boundary="boundariesElement"
 			:container="container"
 			@show="openMenu"
 			@after-show="onOpen"
@@ -230,6 +228,8 @@ import GenRandomId from '../../utils/GenRandomId.js'
 import { t } from '../../l10n.js'
 
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal'
+
+import { Fragment } from 'vue'
 
 const focusableSelector = '.focusable'
 
@@ -348,17 +348,20 @@ export default {
 		},
 	},
 
+	emits: [
+		'open',
+		'update:open',
+		'close',
+		'focus',
+		'blur',
+	],
+
 	data() {
 		return {
 			actions: [],
 			opened: this.open,
 			focusIndex: 0,
 			randomId: 'menu-' + GenRandomId(),
-			// Making children reactive!
-			// By binding this here, vuejs will track the object content
-			// Needed for firstAction reactivity !!!
-			children: this.$children,
-			firstAction: {},
 		}
 	},
 
@@ -379,7 +382,7 @@ export default {
 		 */
 		isValidSingleAction() {
 			return this.actions.length === 1
-				&& this.firstActionElement !== null
+				&& this.actions[0]?.type?.name !== null
 		},
 		/**
 		 * Return the title of the single action if forced
@@ -389,78 +392,52 @@ export default {
 		singleActionTitle() {
 			return this.forceTitle ? this.menuTitle : ''
 		},
+		/**
+		 * Whether the Actions are disabled.
+		 *
+		 * @return {boolean}
+		 */
 		isDisabled() {
 			return this.disabled
-				|| (this.actions.length === 1 && this.firstAction?.$props?.disabled)
+				|| (this.isValidSingleAction && this.actions[0]?.props?.disabled)
 		},
 		/**
-		 * First action vnode
+		 * The tag of the first action in case only one action is given.
 		 *
-		 * @return {object} return the first action vue vnode
+		 * @return {string}
 		 */
-		firstActionVNode() {
-			return this.actions[0]
-		},
-		/**
-		 * Binding of the first action to the template
-		 *
-		 * @return {object} vue template v-bind shortcut
-		 */
-		firstActionBinding() {
-			if (this.firstActionVNode && this.firstActionVNode.componentOptions) {
-				const tag = this.firstActionVNode.componentOptions.tag
-				if (tag === 'ActionLink') {
-					return {
-						is: 'a',
-						href: this.firstAction.href,
-						target: this.firstAction.target,
-						'aria-label': this.firstAction.ariaLabel,
-						...this.firstAction.$attrs,
-						...this.firstAction.$props,
-					}
-				}
-				if (tag === 'ActionRouter') {
-					return {
-						is: 'router-link',
-						to: this.firstAction.to,
-						exact: this.firstAction.exact,
-						'aria-label': this.firstAction.ariaLabel,
-						...this.firstAction.$attrs,
-						...this.firstAction.$props,
-					}
-				}
-				if (tag === 'ActionButton') {
-					return {
-						is: 'button',
-						'aria-label': this.firstAction.ariaLabel,
-						...this.firstAction.$attrs,
-						...this.firstAction.$props,
-					}
-				}
+		firstActionTag() {
+			const name = this.actions[0]?.type?.name
+			if (name === 'ActionLink') {
+				return 'a'
+			}
+			if (name === 'ActionRouter') {
+				return 'vue:router-link'
+			}
+			if (name === 'ActionButton') {
+				return 'button'
 			}
 			// other action types are not allowed as standalone buttons
 			return null
 		},
+		/**
+		 * The text of the first action to show in a tooltip for a single action.
+		 *
+		 * @return {string}
+		 */
+		firstActionText() {
+			return this.actions[0]?.children?.default?.()[0].children?.trim?.()
+		},
 
-		// return the event to bind if the firstActionVNode have an action
-		firstActionEvent() {
-			return this.firstActionVNode?.componentOptions?.listeners?.click
-		},
-		firstActionEventBinding() {
-			return this.firstActionEvent ? 'click' : null
-		},
 		// return the first action icon slot vnodes array
 		firstActionIconSlot() {
-			return this.firstAction?.$slots?.icon
-		},
-		firstActionClass() {
-			const staticClass = this.firstActionVNode && this.firstActionVNode.data.staticClass
-			const dynClass = this.firstActionVNode && this.firstActionVNode.data.class
-			return (staticClass + ' ' + dynClass).trim()
+			return this.actions[0]?.children?.icon?.()?.find(vnode => typeof vnode?.type !== 'symbol')
 		},
 
 		iconSlotIsPopulated() {
-			return !!this.$slots.icon
+			return this.$slots.icon?.().filter(
+				(item) => (typeof item?.type) !== 'symbol'
+			)?.length > 0
 		},
 	},
 
@@ -473,18 +450,6 @@ export default {
 
 			this.opened = state
 		},
-		/**
-		 * Reactive binding to the first children
-		 * Since we're here, it means we already passed all the proper checks
-		 * we can assume the first action is the first children too
-		 */
-		children() {
-			// Fix #2529, slots maybe not available on creation lifecycle
-			// first action vue children object
-			this.firstAction = this.children[0]
-				? this.children[0]
-				: {}
-		},
 	},
 	beforeMount() {
 		// init actions
@@ -493,7 +458,6 @@ export default {
 	beforeUpdate() {
 		// ! since we're using $slots to manage our actions
 		// ! we NEED to update the actions if anything change
-
 		// update children & actions
 		// no need to init actions again since we bound it to $children
 		// and the array is now reactive
@@ -518,7 +482,7 @@ export default {
 			this.$emit('update:open', true)
 
 			/**
-			 * Event emitted when the popover menu is closed
+			 * Event emitted when the popover menu is opened
 			 */
 			this.$emit('open')
 		},
@@ -642,17 +606,34 @@ export default {
 				event.stopPropagation()
 			}
 		},
-
-		// ACTIONS MANAGEMENT
-		// exec the first action
-		execFirstAction(event) {
-			if (this.firstActionEvent) {
-				this.firstActionEvent(event)
-			}
-		},
+		/**
+		 * This returns all actions in the default slot.
+		 *
+		 * @return {object}
+		 */
 		initActions() {
-			// filter out invalid slots
-			this.actions = (this.$slots.default || []).filter(node => !!node && !!node.componentOptions)
+			const actions = []
+			// We have to iterate over all slot elements
+			this.$slots.default?.().forEach(vnode => {
+				if (this.isAction(vnode)) {
+					actions.push(vnode)
+					return
+				}
+				// If we encounter a Fragment, we have to check its children too
+				if (vnode?.type === Fragment) {
+					vnode?.children?.forEach?.(child => {
+						if (this.isAction(child)) {
+							actions.push(child)
+							return
+						}
+					})
+				}
+
+			})
+			this.actions = actions
+		},
+		isAction(vnode) {
+			return vnode?.type?.name?.startsWith?.('Action')
 		},
 		onFocus(event) {
 			this.$emit('focus', event)
@@ -721,7 +702,7 @@ export default {
 
 			// non-background icon class
 			// image slot
-			::v-deep span {
+			:deep(span) {
 				width: 24px;
 				height: 24px;
 				line-height: $icon-size;
@@ -732,7 +713,7 @@ export default {
 		}
 	}
 
-	&::v-deep .material-design-icon {
+	&:deep(.material-design-icon) {
 		width: $clickable-area;
 		height: $clickable-area;
 		opacity: $opacity_full;

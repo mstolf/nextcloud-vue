@@ -73,7 +73,7 @@ The list size must be between the min and the max width value.
 			<div v-if="isMobile"
 				:class="showDetails ? 'app-content-wrapper--show-details' : 'app-content-wrapper--show-list'"
 				class="app-content-wrapper app-content-wrapper--mobile">
-				<AppDetailsToggle v-if="hasList && showDetails" @click.native.stop.prevent="hideDetails" />
+				<AppDetailsToggle v-if="hasList && showDetails" @click.stop.prevent="hideDetails" />
 
 				<slot name="list" />
 				<slot />
@@ -190,6 +190,8 @@ export default {
 		},
 	},
 
+	emits: ['update:showDetails'],
+
 	data() {
 		return {
 			contentHeight: 0,
@@ -258,7 +260,7 @@ export default {
 		this.restorePaneConfig()
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		this.mc.off('swipeleft swiperight', this.handleSwipe)
 	},
 
@@ -347,7 +349,7 @@ export default {
 	}
 }
 
-::v-deep .splitpanes.default-theme {
+:deep(.splitpanes.default-theme) {
 	.app-content-list {
 		max-width: none;
 	}

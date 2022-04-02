@@ -93,6 +93,13 @@ export default {
 		},
 	},
 
+	emits: [
+		'update:value',
+		'input',
+		'submit',
+		'change',
+	],
+
 	data() {
 		return {
 			submitTranslated: t('Submit'),

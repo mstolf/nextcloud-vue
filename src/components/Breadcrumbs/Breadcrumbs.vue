@@ -134,7 +134,7 @@ import { subscribe, unsubscribe } from '@nextcloud/event-bus'
 import IconFolder from 'vue-material-design-icons/Folder'
 
 import debounce from 'debounce'
-import Vue from 'vue'
+import { cloneVNode, h, resolveComponent } from 'vue'
 
 const crumbClass = 'vue-crumb'
 
@@ -156,6 +156,7 @@ export default {
 			default: 'icon-home',
 		},
 	},
+	emits: ['dropped'],
 	data() {
 		return {
 			/**
@@ -181,15 +182,16 @@ export default {
 				// Is the menu open or not
 				open: false,
 			},
+			breadcrumbs_refs: {},
 		}
 	},
 	beforeMount() {
 		// Filter all invalid items, only Breadcrumb components are allowed
-		ValidateSlot(this.$slots.default, ['Breadcrumb'], this)
+		ValidateSlot(this.$slots.default?.(), ['Breadcrumb'], this)
 	},
 	beforeUpdate() {
 		// Also check before every update
-		ValidateSlot(this.$slots.default, ['Breadcrumb'], this)
+		ValidateSlot(this.$slots.default?.(), ['Breadcrumb'], this)
 	},
 	created() {
 		/**
@@ -211,20 +213,21 @@ export default {
 		/**
 		 * Check that crumbs to hide are hidden
 		 */
-		this.delayedHideCrumbs()
+		this.$nextTick(() => {
+			this.hideCrumbs()
+		})
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		window.removeEventListener('resize', this.handleWindowResize)
 		unsubscribe('navigation-toggled', this.delayedResize)
 	},
 	methods: {
 		/**
-		 * Check that all crumbs to hide are really hidden
+		 * Call the resize function after a delay
 		 */
-		delayedHideCrumbs() {
-			this.$nextTick(() => {
-				const crumbs = this.$slots.default || []
-				this.hideCrumbs(crumbs)
+		async delayedResize() {
+			await this.$nextTick(() => {
+				this.handleWindowResize()
 			})
 		},
 		/**
@@ -240,52 +243,46 @@ export default {
 			this.menuBreadcrumbProps.open = false
 		},
 		/**
-		 * Call the resize function after a delay
-		 */
-		delayedResize() {
-			this.$nextTick(() => {
-				this.handleWindowResize()
-			})
-		},
-		/**
 		 * Check the width of the breadcrumb and hide breadcrumbs
 		 * if we overflow otherwise.
 		 */
 		handleWindowResize() {
-			// All breadcrumb components passed into the default slot
-			const breadcrumbs = this.$slots.default || []
 			// If there is no container yet, we cannot determine its size
-			if (this.$refs.container) {
-				const nrCrumbs = breadcrumbs.length
-				const hiddenIndices = []
-				const availableWidth = this.$refs.container.offsetWidth
-				let totalWidth = this.getTotalWidth(breadcrumbs)
-				// If we have breadcumbs actions, we have to take their width into account too.
-				if (this.$refs.breadcrumb__actions) {
-					totalWidth += this.$refs.breadcrumb__actions.offsetWidth
-				}
-				let overflow = totalWidth - availableWidth
-				// If we overflow, we have to take the action-item width into account as well.
-				overflow += (overflow > 0) ? 64 : 0
-				let i = 0
-				// We start hiding the breadcrumb in the center
-				const startIndex = Math.floor(nrCrumbs / 2)
-				// Don't hide the first and last breadcrumb
-				while (overflow > 0 && i < nrCrumbs - 2) {
-					// We hide elements alternating to the left and right
-					const currentIndex = startIndex + ((i % 2) ? i + 1 : i) / 2 * Math.pow(-1, i + (nrCrumbs % 2))
-					// Calculate the remaining overflow width after hiding this breadcrumb
-					overflow -= this.getWidth(breadcrumbs[currentIndex].elm)
-					hiddenIndices.push(currentIndex)
-					i++
-				}
-				// We only update the hidden crumbs if they have changed,
-				// otherwise we will run into an infinite update loop.
-				if (!this.arraysEqual(this.hiddenIndices, hiddenIndices.sort((a, b) => a - b))) {
-					// Get all breadcrumbs based on the hidden indices
-					this.hiddenCrumbs = hiddenIndices.map((index) => { return breadcrumbs[index] })
-					this.hiddenIndices = hiddenIndices
-				}
+			if (!this.$refs.container) {
+				return
+			}
+			// All breadcrumb components passed into the default slot
+			const breadcrumbs = Object.values(this.breadcrumbs_refs)
+			const breadcrumbsVnodes = this.$slots.default?.()[0]?.children || []
+			const nrCrumbs = breadcrumbs.length
+			const hiddenIndices = []
+			const availableWidth = this.$refs.container.offsetWidth
+			let totalWidth = this.getTotalWidth(breadcrumbs)
+			// If we have breadcumbs actions, we have to take their width into account too.
+			if (this.$refs.breadcrumb__actions) {
+				totalWidth += this.$refs.breadcrumb__actions.offsetWidth
+			}
+			let overflow = totalWidth - availableWidth
+			// If we overflow, we have to take the action-item width into account as well.
+			overflow += (overflow > 0) ? 64 : 0
+			let i = 0
+			// We start hiding the breadcrumb in the center
+			const startIndex = Math.floor(nrCrumbs / 2)
+			// Don't hide the first and last breadcrumb
+			while (overflow > 0 && i < nrCrumbs - 2) {
+				// We hide elements alternating to the left and right
+				const currentIndex = startIndex + ((i % 2) ? i + 1 : i) / 2 * Math.pow(-1, i + (nrCrumbs % 2))
+				// Calculate the remaining overflow width after hiding this breadcrumb
+				overflow -= this.getWidth(breadcrumbs[currentIndex]?.$el)
+				hiddenIndices.push(currentIndex)
+				i++
+			}
+			// We only update the hidden crumbs if they have changed,
+			// otherwise we will run into an infinite update loop.
+			if (!this.arraysEqual(this.hiddenIndices, hiddenIndices.sort((a, b) => a - b))) {
+				// Get all breadcrumbs based on the hidden indices
+				this.hiddenCrumbs = hiddenIndices.map((index) => { return breadcrumbsVnodes[index] })
+				this.hiddenIndices = hiddenIndices
 			}
 		},
 		/**
@@ -315,7 +312,7 @@ export default {
 		 * @return {number} The total width
 		 */
 		getTotalWidth(breadcrumbs) {
-			return breadcrumbs.reduce((width, crumb, index) => width + this.getWidth(crumb.elm), 0)
+			return breadcrumbs.reduce((width, crumb, index) => width + this.getWidth(crumb.$el), 0)
 		},
 		/**
 		 * Calculates the width of the provided element
@@ -324,7 +321,7 @@ export default {
 		 * @return {number} The width
 		 */
 		getWidth(el) {
-			if (!el.classList) return 0
+			if (!el?.classList) return 0
 			const hide = el.classList.contains(`${crumbClass}--hidden`)
 			el.style.minWidth = 'auto'
 			el.classList.remove(`${crumbClass}--hidden`)
@@ -448,17 +445,15 @@ export default {
 		/**
 		 * Check for each crumb if we have to hide it and
 		 * add it to the array of all crumbs.
-		 *
-		 * @param {Array} crumbs The array of the crumbs to hide
-		 * @param {number} offset The offset of the indices of the provided crumbs array
 		 */
-		hideCrumbs(crumbs, offset = 0) {
+		hideCrumbs() {
+			const crumbs = Object.values(this.breadcrumbs_refs)
 			crumbs.forEach((crumb, i) => {
-				if (crumb?.elm?.classList) {
-					if (this.hiddenIndices.includes(i + offset)) {
-						crumb.elm.classList.add(`${crumbClass}--hidden`)
+				if (crumb?.$el?.classList) {
+					if (this.hiddenIndices.includes(i)) {
+						crumb.$el.classList.add(`${crumbClass}--hidden`)
 					} else {
-						crumb.elm.classList.remove(`${crumbClass}--hidden`)
+						crumb.$el.classList.remove(`${crumbClass}--hidden`)
 					}
 				}
 			})
@@ -467,12 +462,11 @@ export default {
 	/**
 	 * The render function to display the component
 	 *
-	 * @param {Function} createElement The function to create VNodes
 	 * @return {VNodes} The created VNodes
 	 */
-	render(createElement) {
+	render() {
 		// Get the breadcrumbs
-		const breadcrumbs = this.$slots.default || []
+		const breadcrumbs = this.$slots.default?.()[0]?.children || []
 
 		// Check that we have at least one breadcrumb
 		if (breadcrumbs.length === 0) {
@@ -480,7 +474,10 @@ export default {
 		}
 
 		// Add the root icon to the first breadcrumb
-		Vue.set(breadcrumbs[0].componentOptions.propsData, 'icon', this.rootIcon)
+		breadcrumbs[0] = cloneVNode(breadcrumbs[0], {
+			icon: this.rootIcon,
+			ref: 'breadcrumbs',
+		})
 
 		// The array of all created VNodes
 		let crumbs = []
@@ -491,92 +488,95 @@ export default {
 		const crumbs1 = this.hiddenCrumbs.length
 			? breadcrumbs.slice(0, Math.round(breadcrumbs.length / 2))
 			: breadcrumbs
+		/**
+		 * Use a proxy object to store breadcrumbs refs
+		 * and don't write to this.breadcrumbs_refs directly
+		 * to not trigger a myriad of re-renders.
+		 */
+		const breadcrumbs_refs = {}
 		// Add the breadcrumbs to the array of the created VNodes, check if hiding them is necessary.
-		crumbs = crumbs.concat(crumbs1)
-		this.hideCrumbs(crumbs1)
+		crumbs = crumbs.concat(crumbs1.map((crumb, index) => cloneVNode(crumb, {
+			ref: (crumb) => {
+				breadcrumbs_refs[index] = crumb
+			},
+		})))
 
 		// The Actions menu
 		if (this.hiddenCrumbs.length) {
 			// Use a breadcrumb component for the hidden breadcrumbs
-			crumbs.push(createElement('Breadcrumb', {
+			crumbs.push(h(resolveComponent('Breadcrumb'), {
 				class: 'dropdown',
-
-				props: this.menuBreadcrumbProps,
-
+				...this.menuBreadcrumbProps,
 				// Add a ref to the Actions menu
 				ref: 'actionsBreadcrumb',
 				key: 'actions-breadcrumb-1',
 				// Add handlers so the Actions menu opens on hover
-				nativeOn: {
-					dragstart: this.dragStart,
-					dragenter: () => { this.menuBreadcrumbProps.open = true },
-					dragleave: this.closeActions,
-				},
-				on: {
-					// Make sure we keep the same open state
-					// as the Actions component
-					'update:open': (open) => {
-						this.menuBreadcrumbProps.open = open
-					},
+				onDragstart: this.dragStart,
+				onDragenter: () => { this.menuBreadcrumbProps.open = true },
+				onDragleave: this.closeActions,
+				// Make sure we keep the same open state
+				// as the Actions component
+				'onUpdate:open': (open) => {
+					this.menuBreadcrumbProps.open = open
 				},
 			// Add all hidden breadcrumbs as ActionRouter or ActionLink
-			}, this.hiddenCrumbs.map(crumb => {
-				// Get the parameters from the breadcrumb component props
-				const to = crumb.componentOptions.propsData.to
-				const href = crumb.componentOptions.propsData.href
-				const disabled = crumb.componentOptions.propsData.disableDrop
-				// Decide whether to show the breadcrumbs as ActionRouter or ActionLink
-				let element = 'ActionLink'
-				let path = href
-				if (to) {
-					element = 'ActionRouter'
-					path = to
-				}
-				const folderIcon = createElement('IconFolder', {
-					props: {
+			}, {
+				default: this.hiddenCrumbs.map(crumb => {
+					// Get the parameters from the breadcrumb component props
+					const to = crumb.props.to
+					const href = crumb.props.href
+					const disabled = crumb.props.disableDrop
+					// Decide whether to show the breadcrumbs as ActionRouter or ActionLink
+					let element = 'ActionLink'
+					let path = href
+					if (to) {
+						element = 'ActionRouter'
+						path = to
+					}
+					const folderIcon = h(resolveComponent('IconFolder'), {
 						size: 20,
-					},
-					slot: 'icon',
-				})
-				return createElement(element, {
-					class: crumbClass,
-					props: {
+					})
+					return h(resolveComponent(element), {
+						class: crumbClass,
 						to,
 						href,
-					},
-					// Prevent the breadcrumbs from being draggable
-					attrs: {
+						// Prevent the breadcrumbs from being draggable
 						draggable: false,
+						// Add the drag and drop handlers
+						onDragstart: this.dragStart,
+						onDrop: ($event) => this.dropped($event, path, disabled),
+						onDragover: this.dragOver,
+						onDragenter: ($event) => this.dragEnter($event, disabled),
+						onDragleave: ($event) => this.dragLeave($event, disabled),
 					},
-					// Add the drag and drop handlers
-					nativeOn: {
-						dragstart: this.dragStart,
-						drop: ($event) => this.dropped($event, path, disabled),
-						dragover: this.dragOver,
-						dragenter: ($event) => this.dragEnter($event, disabled),
-						dragleave: ($event) => this.dragLeave($event, disabled),
-					},
-				},
-				[crumb.componentOptions.propsData.title, folderIcon]
-				)
+					{
+						default: () => crumb.props.title,
+						icon: () => folderIcon,
+					})
+				}),
 			}))
-			)
 		}
 		// The second half of the breadcrumbs
 		const crumbs2 = this.hiddenCrumbs.length
 			? breadcrumbs.slice(Math.round(breadcrumbs.length / 2))
 			: []
-		crumbs = crumbs.concat(crumbs2)
-		this.hideCrumbs(crumbs2, crumbs1.length)
+		// crumbs = crumbs.concat(crumbs2.map((crumb) => cloneVNode(crumb, { ref: 'breadcrumbs' })))
+		crumbs = crumbs.concat(crumbs2.map((crumb, index) => cloneVNode(crumb, {
+			ref: (crumb) => {
+				breadcrumbs_refs[index + crumbs1.length] = crumb
+			},
+		})))
 
 		const wrapper = []
-		wrapper.push(createElement('div', { class: 'breadcrumb__crumbs' }, crumbs))
+		wrapper.push(h('div', { class: 'breadcrumb__crumbs' }, crumbs))
 		// Append the actions slot if it is populated
 		if (this.$slots.actions) {
-			wrapper.push(createElement('div', { class: 'breadcrumb__actions', ref: 'breadcrumb__actions' }, this.$slots.actions))
+			wrapper.push(h('div', { class: 'breadcrumb__actions', ref: 'breadcrumb__actions' }, this.$slots.actions()))
 		}
 
-		return createElement('div', { class: ['breadcrumb', { 'breadcrumb--collapsed': (this.hiddenCrumbs.length === breadcrumbs.length - 2) }], ref: 'container' }, wrapper)
+		this.breadcrumbs_refs = breadcrumbs_refs
+
+		return h('div', { class: ['breadcrumb', { 'breadcrumb--collapsed': (this.hiddenCrumbs.length === breadcrumbs.length - 2) }], ref: 'container' }, wrapper)
 	},
 }
 </script>

@@ -103,7 +103,7 @@
 
 </docs>
 <template>
-	<transition name="fade">
+	<Transition name="fade">
 		<div ref="mask"
 			class="modal-mask"
 			:class="{ 'modal-mask--dark': dark }"
@@ -112,7 +112,7 @@
 			@mousemove="handleMouseMove"
 			@touchmove="handleMouseMove">
 			<!-- Header -->
-			<transition name="fade-visibility">
+			<Transition name="fade-visibility">
 				<div v-show="!clearView"
 					:class="{
 						invisible: clearView
@@ -176,10 +176,10 @@
 						</Actions>
 					</div>
 				</div>
-			</transition>
+			</Transition>
 
 			<!-- Content wrapper -->
-			<transition :name="modalTransitionName">
+			<Transition :name="modalTransitionName">
 				<div v-show="showModal"
 					:class="[
 						`modal-wrapper--${size}`,
@@ -188,7 +188,7 @@
 					class="modal-wrapper"
 					@mousedown.self="close">
 					<!-- Navigation button -->
-					<transition name="fade-visibility">
+					<Transition name="fade-visibility">
 						<a v-show="hasPrevious && !clearView"
 							class="prev"
 							href="#"
@@ -203,7 +203,7 @@
 								</span>
 							</span>
 						</a>
-					</transition>
+					</Transition>
 
 					<!-- Content -->
 					<div class="modal-container">
@@ -212,7 +212,7 @@
 					</div>
 
 					<!-- Navigation button -->
-					<transition name="fade-visibility">
+					<Transition name="fade-visibility">
 						<a v-show="hasNext && !clearView"
 							class="next"
 							href="#"
@@ -227,11 +227,11 @@
 								</span>
 							</span>
 						</a>
-					</transition>
+					</Transition>
 				</div>
-			</transition>
+			</Transition>
 		</div>
-	</transition>
+	</Transition>
 </template>
 
 <script>
@@ -369,6 +369,12 @@ export default {
 		},
 	},
 
+	emits: [
+		'previous',
+		'next',
+		'close',
+	],
+
 	data() {
 		return {
 			mc: null,
@@ -417,7 +423,7 @@ export default {
 	beforeMount() {
 		window.addEventListener('keydown', this.handleKeydown)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		window.removeEventListener('keydown', this.handleKeydown)
 		this.mc.off('swipeleft swiperight')
 		this.mc.destroy()
@@ -442,7 +448,7 @@ export default {
 		}
 
 	},
-	destroyed() {
+	unmounted() {
 		this.clearFocusTrap()
 		this.$el.remove()
 	},
@@ -708,13 +714,13 @@ export default {
 			background-size: 22px;
 		}
 
-		::v-deep button {
+		:deep(button) {
 			// force white instead of default main text
 			color: #fff;
 		}
 
 		// Force the Actions menu icon to be the same size as other icons
-		&::v-deep .action-item__menutoggle {
+		&:deep(.action-item__menutoggle) {
 			padding: 0;
 			span, svg {
 				width: var(--icon-size);
@@ -837,12 +843,12 @@ export default {
 	transition: opacity 250ms;
 }
 
-.fade-enter,
+.fade-enter-from,
 .fade-leave-to {
 	opacity: 0;
 }
 
-.fade-visibility-enter,
+.fade-visibility-enter-from,
 .fade-visibility-leave-to {
 	visibility: hidden;
 	opacity: 0;
@@ -855,9 +861,9 @@ export default {
 	transition: opacity 250ms;
 }
 
-.modal-in-enter,
+.modal-in-enter-from,
 .modal-in-leave-to,
-.modal-out-enter,
+.modal-out-enter-from,
 .modal-out-leave-to {
 	opacity: 0;
 }

@@ -204,7 +204,6 @@ button {
 		:aria-label="ariaLabel"
 		:type="nativeType"
 		:disabled="disabled"
-		v-on="$listeners"
 		@keydown.enter="makeActive"
 		@keyup.enter="makeInactive"
 		@click="handleClick"
@@ -302,7 +301,7 @@ export default {
 	computed: {
 		hasText() {
 			return this.slots?.default !== undefined
-				&& this.slots?.default[0]?.text
+				&& this.slots?.default?.()[0]?.children
 		},
 
 		hasIcon() {
@@ -322,7 +321,7 @@ export default {
 		},
 
 		text() {
-			return this.hasText ? this.slots.default[0].text.trim() : null
+			return this.hasText ? this.slots.default?.()[0].children.trim() : null
 		},
 
 		// Classes applied to the button element

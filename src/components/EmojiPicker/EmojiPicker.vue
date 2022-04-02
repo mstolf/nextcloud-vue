@@ -87,12 +87,11 @@
 </docs>
 
 <template>
-	<Popover :open.sync="open"
+	<Popover v-model:shown="open"
 		:container="container"
 		popover-class="emoji-popover"
 		popover-inner-class="popover-emoji-picker-inner"
 		v-bind="$attrs"
-		v-on="$listeners"
 		@after-show="afterShow"
 		@after-hide="afterHide">
 		<template #trigger>
@@ -173,6 +172,10 @@ export default {
 			default: 'body',
 		},
 	},
+	emits: [
+		'select',
+		'selectData',
+	],
 	data() {
 		return {
 			emojiIndex: new EmojiIndex(data),
@@ -265,22 +268,6 @@ export default {
 
 <style lang="scss">
 @import '~emoji-mart-vue-fast/css/emoji-mart.css';
-
-.emoji-popover {
-	& .tooltip-arrow,
-	&[x-placement^='top'] {
-		margin-left: 0 !important;
-	}
-	& .tooltip-arrow,
-	&[x-placement^='bottom'] {
-		margin-top: 0 !important;
-	}
-
-	// Remove the extra padding from VTooltip
-	.popover-emoji-picker-inner {
-		padding: 0;
-	}
-}
 
 .emoji-mart {
 	background-color: var(--color-main-background) !important;

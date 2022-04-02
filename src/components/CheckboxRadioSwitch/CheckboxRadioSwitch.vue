@@ -127,7 +127,7 @@ export default {
 </docs>
 
 <template>
-	<element :is="wrapperElement"
+	<component :is="wrapperElement"
 		:class="{
 			['checkbox-radio-switch-' + type]: type,
 			'checkbox-radio-switch--checked': isChecked,
@@ -158,7 +158,7 @@ export default {
 			<!-- @slot The checkbox/radio label -->
 			<slot />
 		</label>
-	</element>
+	</component>
 </template>
 
 <script>
@@ -258,6 +258,8 @@ export default {
 			default: 'span',
 		},
 	},
+
+	emits: ['update:checked'],
 
 	computed: {
 		/**

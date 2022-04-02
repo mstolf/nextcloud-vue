@@ -22,13 +22,11 @@
  */
 import './index.scss'
 
-import { VTooltip } from 'v-tooltip'
+import { VTooltip, options } from 'floating-vue'
 
-// force scope the tooltip and use .vue-tooltip
-// instead of .tooltip to avoid server compatibility
-// issues and the use of !important
-VTooltip.options.defaultTemplate = `<div class="vue-tooltip" role="tooltip" data-v-${SCOPE_VERSION}><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>`
-VTooltip.options.defaultHtml = false
-VTooltip.options.defaultDelay = { show: 500, hide: 200 }
+options.themes.tooltip.html = false
+options.themes.tooltip.delay = { show: 500, hide: 200 }
+options.themes.tooltip.distance = 10
+options.themes.tooltip['arrow-padding'] = 3
 
 export default VTooltip

@@ -106,7 +106,7 @@ export default {
 		background-position: center;
 		background-size: 64px;
 
-		::v-deep svg {
+		:deep(svg) {
 			width: 64px;
 			height: 64px;
 		}

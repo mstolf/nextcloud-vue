@@ -3,6 +3,10 @@
  -
  - @author Christoph Wurst <christoph@winzerhof-wurst.at>
  -
+ - @copyright Copyright (c) 2022 Raimund Schlüßler <raimund.schluessler@mailbox.org>
+ -
+ - @author Raimund Schlüßler <raimund.schluessler@mailbox.org>
+ -
  - @license GNU AGPL version 3 or any later version
  -
  - This program is free software: you can redistribute it and/or modify
@@ -68,11 +72,40 @@ export default {
 </template>
 
 <script>
+import { computed } from 'vue'
+
 export default {
 	props: {
 		appName: {
 			type: String,
 			required: true,
+		},
+	},
+	data() {
+		return {
+			isMobile: false,
+			isFullscreen: false,
+		}
+	},
+	provide() {
+		return {
+			isMobile: computed(() => this.isMobile),
+			isFullscreen: computed(() => this.isFullscreen),
+		}
+	},
+	created() {
+		window.addEventListener('resize', this.handleWindowResize)
+		this.handleWindowResize()
+	},
+	beforeUnmount() {
+		window.removeEventListener('resize', this.handleWindowResize)
+	},
+	methods: {
+		handleWindowResize() {
+			this.isMobile = document.documentElement.clientWidth < 1024
+			// if the window height is equal to the screen height,
+			// we're in full screen mode
+			this.isFullscreen = (window.outerHeight === screen.height)
 		},
 	},
 }
@@ -83,9 +116,9 @@ export default {
 	box-sizing: border-box;
 	position: relative;
 	display: flex;
-	padding-top: 50px;
 	min-height: 100%;
-	::v-deep * {
+	min-width: 100%;
+	:deep(*) {
 		box-sizing: border-box;
 	}
 }

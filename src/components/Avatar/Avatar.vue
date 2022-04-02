@@ -106,7 +106,7 @@ import { generateUrl } from '@nextcloud/router'
 
 import DotsHorizontal from 'vue-material-design-icons/DotsHorizontal'
 
-import { directive as ClickOutside } from 'v-click-outside'
+import { directive as ClickOutside } from 'click-outside-vue3'
 
 const browserStorage = getBuilder('nextcloud').persist().build()
 
@@ -442,7 +442,7 @@ export default {
 		}
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.showUserStatus && this.user && !this.isNoUser) {
 			unsubscribe('user_status:status.updated', this.handleUserStatusUpdated)
 		}
@@ -630,7 +630,7 @@ export default {
 
 	&--with-menu {
 		cursor: pointer;
-		::v-deep .trigger {
+		:deep(.trigger) {
 			position: absolute;
 			top: 0;
 			left: 0;

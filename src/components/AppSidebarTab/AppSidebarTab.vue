@@ -59,6 +59,11 @@ export default {
 		},
 	},
 
+	emits: [
+		'bottomReached',
+		'scroll',
+	],
+
 	computed: {
 		// TODO: implement a better way to force pass a prop fromm Sidebar
 		isActive() {

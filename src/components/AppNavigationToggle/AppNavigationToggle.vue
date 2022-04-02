@@ -59,6 +59,8 @@ export default {
 		},
 	},
 
+	emits: ['update:open'],
+
 	computed: {
 		label() {
 			return this.open ? t('Close navigation') : t('Open navigation')

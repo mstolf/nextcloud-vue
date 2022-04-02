@@ -117,85 +117,86 @@ Just set the `pinned` prop.
 			'app-navigation-entry--pinned': pinned,
 			'app-navigation-entry--collapsible': collapsible,
 		}">
-		<nav-element v-bind="navElement"
-			:class="{
-				'app-navigation-entry--no-icon': !isIconShown,
-				'app-navigation-entry--editing': editingActive,
-				'app-navigation-entry--deleted': undo,
-				'active': isActive,
-			}"
-			class="app-navigation-entry">
-			<!-- Icon and title -->
-			<a v-if="!undo"
-				class="app-navigation-entry-link"
-				:aria-description="ariaDescription"
-				href="#"
-				@click="onClick">
+		<router-link v-slot="{ href, navigate, isActive }" :to="to" custom>
+			<div :class="{
+					'app-navigation-entry--no-icon': !isIconShown,
+					'app-navigation-entry--editing': editingActive,
+					'app-navigation-entry--deleted': undo,
+					'active': isActive,
+				}"
+				class="app-navigation-entry">
+				<!-- Icon and title -->
+				<a v-if="!undo"
+					class="app-navigation-entry-link"
+					:aria-description="ariaDescription"
+					:href="href || '#'"
+					@click="(event) => onClick(event, navigate)">
 
-				<!-- icon if not collapsible -->
-				<!-- never show the icon over the collapsible if mobile -->
-				<div :class="{ 'icon-loading-small': loading, [icon]: icon && isIconShown }"
-					class="app-navigation-entry-icon">
-					<slot v-show="!loading && isIconShown" name="icon" />
-				</div>
-				<span v-if="!editingActive" class="app-navigation-entry__title" :title="title">
-					{{ title }}
-				</span>
-				<div v-if="editingActive" class="editingContainer">
-					<InputConfirmCancel ref="editingInput"
-						v-model="editingValue"
-						:placeholder="editPlaceholder !== '' ? editPlaceholder : title"
-						@cancel="cancelEditing"
-						@confirm="handleEditingDone" />
-				</div>
-			</a>
+					<!-- icon if not collapsible -->
+					<!-- never show the icon over the collapsible if mobile -->
+					<div :class="{ 'icon-loading-small': loading, [icon]: icon && isIconShown }"
+						class="app-navigation-entry-icon">
+						<slot v-if="!loading && isIconShown" name="icon" />
+					</div>
+					<span v-if="!editingActive" class="app-navigation-entry__title" :title="title">
+						{{ title }}
+					</span>
+					<div v-if="editingActive" class="editingContainer">
+						<InputConfirmCancel ref="editingInput"
+							v-model="editingValue"
+							:placeholder="editPlaceholder !== '' ? editPlaceholder : title"
+							@cancel="cancelEditing"
+							@confirm="handleEditingDone" />
+					</div>
+				</a>
 
-			<AppNavigationIconCollapsible v-if="collapsible" :open="opened" @click.prevent.stop="toggleCollapse" />
-			<!-- undo entry -->
-			<div v-if="undo" class="app-navigation-entry__deleted">
-				<div class="app-navigation-entry__deleted-description">
-					{{ title }}
+				<AppNavigationIconCollapsible v-if="collapsible" :open="opened" @click.prevent.stop="toggleCollapse" />
+				<!-- undo entry -->
+				<div v-if="undo" class="app-navigation-entry__deleted">
+					<div class="app-navigation-entry__deleted-description">
+						{{ title }}
+					</div>
 				</div>
-			</div>
 
-			<!-- Counter and Actions -->
-			<div v-if="hasUtils && !editingActive" class="app-navigation-entry__utils">
-				<div v-if="$slots.counter"
-					class="app-navigation-entry__counter-wrapper">
-					<slot name="counter" />
-				</div>
-				<Actions menu-align="right"
-					:placement="menuPlacement"
-					:open="menuOpen"
-					:force-menu="forceMenu"
-					:default-icon="menuIcon"
-					@update:open="onMenuToggle">
-					<template #icon>
-						<!-- @slot Slot for the custom menu icon -->
-						<slot name="menu-icon" />
-					</template>
-					<ActionButton v-if="editable && !editingActive"
-						:aria-label="editButtonAriaLabel"
-						@click="handleEdit">
+				<!-- Counter and Actions -->
+				<div v-if="hasUtils && !editingActive" class="app-navigation-entry__utils">
+					<div v-if="$slots.counter"
+						class="app-navigation-entry__counter-wrapper">
+						<slot name="counter" />
+					</div>
+					<Actions menu-align="right"
+						:placement="menuPlacement"
+						:open="menuOpen"
+						:force-menu="forceMenu"
+						:default-icon="menuIcon"
+						@update:open="onMenuToggle">
 						<template #icon>
-							<Pencil :size="20" decorative />
+							<!-- @slot Slot for the custom menu icon -->
+							<slot name="menu-icon" />
 						</template>
-						{{ editLabel }}
-					</ActionButton>
-					<ActionButton v-if="undo"
-						:aria-label="undoButtonAriaLabel"
-						@click="handleUndo">
-						<template #icon>
-							<Undo :size="20" decorative />
-						</template>
-					</ActionButton>
-					<slot name="actions" />
-				</Actions>
-			</div>
+						<ActionButton v-if="editable && !editingActive"
+							:aria-label="editButtonAriaLabel"
+							@click="handleEdit">
+							<template #icon>
+								<Pencil :size="20" decorative />
+							</template>
+							{{ editLabel }}
+						</ActionButton>
+						<ActionButton v-if="undo"
+							:aria-label="undoButtonAriaLabel"
+							@click="handleUndo">
+							<template #icon>
+								<Undo :size="20" decorative />
+							</template>
+						</ActionButton>
+						<slot name="actions" />
+					</Actions>
+				</div>
 
-			<!-- Anything (virtual) that should be mounted in the component, like a related modal -->
-			<slot name="extra" />
-		</nav-element>
+				<!-- Anything (virtual) that should be mounted in the component, like a related modal -->
+				<slot name="extra" />
+			</div>
+		</router-link>
 		<!-- Children elements -->
 		<ul v-if="canHaveChildren && hasChildren" class="app-navigation-entry__children">
 			<slot />
@@ -215,6 +216,8 @@ import { t } from '../../l10n.js'
 
 import Pencil from 'vue-material-design-icons/Pencil'
 import Undo from 'vue-material-design-icons/Undo'
+
+import { directive as ClickOutside } from 'click-outside-vue3'
 
 export default {
 	name: 'AppNavigationItem',
@@ -264,14 +267,6 @@ export default {
 		to: {
 			type: [String, Object],
 			default: '',
-		},
-		/**
-		 * Pass in `true` if you want the matching behaviour to
-		 * be non-inclusive: https://router.vuejs.org/api/#exact
-		 */
-		exact: {
-			type: Boolean,
-			default: false,
 		},
 		/**
 		 * Gives the possibility to collapse the children elements into the
@@ -363,6 +358,14 @@ export default {
 		},
 	},
 
+	emits: [
+		'update:menuOpen',
+		'update:open',
+		'update:title',
+		'click',
+		'undo',
+	],
+
 	data() {
 		return {
 			editingValue: '',
@@ -373,7 +376,7 @@ export default {
 	},
 	computed: {
 		collapsible() {
-			return this.allowCollapse && !!this.$slots.default
+			return this.allowCollapse && !!this.$slots?.default
 		},
 
 		// is the icon shown?
@@ -395,28 +398,11 @@ export default {
 		hasUtils() {
 			if (this.editing) {
 				return false
-			} else if (this.$slots.actions || this.$slots.counter || this.editable || this.undo) {
+			} else if (this.$slots?.actions || this.$slots?.counter || this.editable || this.undo) {
 				return true
 			} else {
 				return false
 			}
-		},
-		// This is used to decide which outer element type to use
-		navElement() {
-			if (this.to) {
-				return {
-					is: 'router-link',
-					tag: 'div',
-					to: this.to,
-					exact: this.exact,
-				}
-			}
-			return {
-				is: 'div',
-			}
-		},
-		isActive() {
-			return this.to && this.$route === this.to
 		},
 		editButtonAriaLabel() {
 			return this.editLabel ? this.editLabel : t('Edit item')
@@ -450,9 +436,12 @@ export default {
 			this.$emit('update:open', this.opened)
 		},
 
-		// forward click event
-		onClick(event) {
+		// forward click event and handle navigation
+		onClick(event, navigate) {
 			this.$emit('click', event)
+			if (this.to) {
+				navigate()
+			}
 		},
 
 		// Edition methods

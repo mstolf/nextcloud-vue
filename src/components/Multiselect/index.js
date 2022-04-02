@@ -21,8 +21,5 @@
  */
 import './index.scss'
 import Multiselect from './Multiselect.vue'
-import ScopeComponent from '../../utils/ScopeComponent.js'
-
-ScopeComponent(Multiselect)
 
 export default Multiselect

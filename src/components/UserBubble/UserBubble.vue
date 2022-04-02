@@ -196,6 +196,10 @@ export default {
 			default: 2,
 		},
 	},
+	emits: [
+		'click',
+		'update:open',
+	],
 	computed: {
 		/**
 		 * If userbubble is empty, let's NOT
@@ -245,10 +249,7 @@ export default {
 		},
 
 		popoverEmpty() {
-			if ('default' in this.$slots) {
-				return false
-			}
-			return true
+			return !this.$slots.default
 		},
 
 		styles() {

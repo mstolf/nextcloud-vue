@@ -42,7 +42,7 @@ export default {
 		this.toggleAppNavigationButton(true)
 	},
 
-	beforeDestroy() {
+	beforeUnmount() {
 		this.toggleAppNavigationButton(false)
 	},
 

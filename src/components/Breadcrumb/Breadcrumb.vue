@@ -39,7 +39,7 @@ This component is meant to be used inside a Breadcrumbs component.
 		@dragover.prevent="() => {}"
 		@dragenter="dragEnter"
 		@dragleave="dragLeave">
-		<element :is="tag"
+		<component :is="tag"
 			v-if="(title || icon) && !$slots.default"
 			:to="to"
 			:href="href">
@@ -48,7 +48,7 @@ This component is meant to be used inside a Breadcrumbs component.
 				<span v-if="icon" :class="icon" class="icon" />
 				<span v-else>{{ title }}</span>
 			</slot>
-		</element>
+		</component>
 		<Actions v-if="$slots.default"
 			ref="actions"
 			:force-menu="forceMenu"
@@ -132,6 +132,10 @@ export default {
 			default: false,
 		},
 	},
+	emits: [
+		'update:open',
+		'dropped',
+	],
 	data() {
 		return {
 			/**
@@ -246,7 +250,7 @@ export default {
 		font-weight: bold;
 
 		> a,
-		> a::v-deep * {
+		> a :deep(*) {
 			cursor: default;
 		}
 

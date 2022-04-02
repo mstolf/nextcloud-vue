@@ -79,6 +79,12 @@ export default {
 		},
 	},
 
+	emits: [
+		'input',
+		'confirm',
+		'cancel',
+	],
+
 	data() {
 		return {
 			labelConfirm: t('Confirm changes'),
