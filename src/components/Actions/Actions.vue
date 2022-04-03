@@ -166,9 +166,9 @@ export default {
 		<!-- If more than one action, create a popovermenu -->
 		<Popover :delay="0"
 			:handle-resize="true"
-			:open.sync="opened"
+			:shown.sync="opened"
 			:placement="placement"
-			:boundaries-element="boundariesElement"
+			:boundary="boundariesElement"
 			:container="container"
 			popover-base-class="action-item__popover"
 			@show="openMenu"
@@ -519,7 +519,7 @@ export default {
 			this.$emit('update:open', true)
 
 			/**
-			 * Event emitted when the popover menu is closed
+			 * Event emitted when the popover menu is opened
 			 */
 			this.$emit('open')
 		},
