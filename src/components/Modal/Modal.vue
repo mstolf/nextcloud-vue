@@ -307,7 +307,7 @@ export default {
 		},
 		clearViewDelay: {
 			type: Number,
-			default: 5000,
+			default: -1,
 		},
 		/**
 		 * Declare the slide interval
