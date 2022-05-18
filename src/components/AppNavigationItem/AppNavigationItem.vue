@@ -111,7 +111,7 @@ Just set the `pinned` prop.
 </docs>
 
 <template>
-	<element class="app-navigation-entry-wrapper"
+	<li class="app-navigation-entry-wrapper"
 		:class="{
 			'app-navigation-entry--opened': opened,
 			'app-navigation-entry--collapsible': collapsible,
@@ -197,12 +197,11 @@ Just set the `pinned` prop.
 			<!-- Anything (virtual) that should be mounted in the component, like a related modal -->
 			<slot name="extra" />
 		</nav-element>
-
 		<!-- Children elements -->
 		<ul v-if="canHaveChildren && hasChildren" class="app-navigation-entry__children">
 			<slot />
 		</ul>
-	</element>
+				</li>
 </template>
 
 <script>
