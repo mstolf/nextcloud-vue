@@ -108,6 +108,9 @@
 			class="modal-mask"
 			:class="{ 'modal-mask--dark': dark }"
 			:style="cssVariables"
+			role="dialog"
+			aria-labelledby="modalTitle"
+			aria-describedby="modalDescription"
 			@click="handleMouseMove"
 			@mousemove="handleMouseMove"
 			@touchmove="handleMouseMove">
@@ -118,7 +121,7 @@
 						invisible: clearView
 					}"
 					class="modal-header">
-					<div v-if="title.trim() !== ''" class="modal-title">
+					<div v-if="title.trim() !== ''" id="modalTitle" class="modal-title">
 						{{ title }}
 					</div>
 					<div class="icons-menu">
@@ -167,7 +170,7 @@
 
 						<!-- Close modal -->
 						<Actions v-if="canClose" class="header-close">
-							<ActionButton @click="close">
+							<ActionButton aria-label="Close modal" @click="close">
 								<template #icon>
 									<Close :size="iconSize" title="" decorative />
 								</template>
@@ -206,7 +209,7 @@
 					</transition>
 
 					<!-- Content -->
-					<div class="modal-container">
+					<div id="modalDescription" class="modal-container">
 						<!-- @slot Modal content to render -->
 						<slot />
 					</div>
