@@ -189,20 +189,19 @@
 					@mousedown.self="close">
 					<!-- Navigation button -->
 					<transition name="fade-visibility">
-						<a v-show="hasPrevious && !clearView"
+						<Actions v-show="hasPrevious && !clearView"
 							class="prev"
-							href="#"
 							:class="{
 								invisible: clearView || !hasPrevious
 							}"
 							@click.prevent.stop="previous">
-							<span class="icon-previous">
-								<ChevronLeft :size="40" title="" decorative />
-								<span class="hidden-visually">
-									{{ t('Previous') }}
-								</span>
-							</span>
-						</a>
+							<ActionButton aria-label="Previous item">
+								<template #icon>
+									<ChevronLeft :size="40" title="" decorative />
+								</template>
+								{{ t('Previous') }}
+							</ActionButton>
+						</Actions>
 					</transition>
 
 					<!-- Content -->
@@ -213,20 +212,19 @@
 
 					<!-- Navigation button -->
 					<transition name="fade-visibility">
-						<a v-show="hasNext && !clearView"
+						<Actions v-show="hasNext && !clearView"
 							class="next"
-							href="#"
 							:class="{
 								invisible: clearView || !hasNext
 							}"
 							@click.prevent.stop="next">
-							<span class="icon-next">
-								<ChevronRight :size="40" title="" decorative />
-								<span class="hidden-visually">
-									{{ t('Next') }}
-								</span>
-							</span>
-						</a>
+							<ActionButton aria-label="Next item">
+								<template #icon>
+									<ChevronRight :size="40" title="" decorative />
+								</template>
+								{{ t('Next') }}
+							</ActionButton>
+						</Actions>
 					</transition>
 				</div>
 			</transition>
@@ -733,6 +731,9 @@ export default {
 	height: 100%;
 
 	/* Navigation buttons */
+	button{
+		color: white;
+	}
 	.prev,
 	.next {
 		z-index: 10000;
@@ -761,17 +762,6 @@ export default {
 	}
 	.next {
 		right: 0;
-	}
-
-	// buttons/icons
-	.icon-next,
-	.icon-previous {
-		box-sizing: border-box;
-		width: $clickable-area;
-		height: $clickable-area;
-		color: white;
-		background-image: none;
-		display: flex;
 	}
 
 	/* Content */
