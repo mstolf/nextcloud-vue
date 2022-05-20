@@ -107,74 +107,65 @@
 		<div ref="mask"
 			class="modal-mask"
 			:class="{ 'modal-mask--dark': dark }"
-			:style="cssVariables"
-			@click="handleMouseMove"
-			@mousemove="handleMouseMove"
-			@touchmove="handleMouseMove">
+			:style="cssVariables">
 			<!-- Header -->
 			<transition name="fade-visibility">
-				<div v-show="!clearView"
-					:class="{
-						invisible: clearView
-					}"
-					class="modal-header">
-					<div v-if="title.trim() !== ''" class="modal-title">
-						{{ title }}
-					</div>
-					<div class="icons-menu">
-						<!-- Play-pause toggle -->
-						<button v-if="hasNext && enableSlideshow"
-							v-tooltip.auto="playPauseTitle"
-							:class="{ 'play-pause-icons--paused': slideshowPaused }"
-							class="play-pause-icons"
-							type="button"
-							@click="togglePlayPause">
-							<!-- Play/pause icons -->
-							<Play v-if="!playing"
-								:size="iconSize"
-								class="play-pause-icons__play"
-								title=""
-								decorative />
-							<Pause v-else
-								:size="iconSize"
-								class="play-pause-icons__pause"
-								title=""
-								decorative />
-							<span class="hidden-visually">
-								{{ playPauseTitle }}
-							</span>
+				<div v-if="title.trim() !== ''" class="modal-title">
+					{{ title }}
+				</div>
+				<div class="icons-menu">
+					<!-- Play-pause toggle -->
+					<button v-if="hasNext && enableSlideshow"
+						v-tooltip.auto="playPauseTitle"
+						:class="{ 'play-pause-icons--paused': slideshowPaused }"
+						class="play-pause-icons"
+						type="button"
+						@click="togglePlayPause">
+						<!-- Play/pause icons -->
+						<Play v-if="!playing"
+							:size="iconSize"
+							class="play-pause-icons__play"
+							title=""
+							decorative />
+						<Pause v-else
+							:size="iconSize"
+							class="play-pause-icons__pause"
+							title=""
+							decorative />
+						<span class="hidden-visually">
+							{{ playPauseTitle }}
+						</span>
 
-							<!-- Progress circle, css animated -->
-							<svg v-if="playing"
-								class="progress-ring"
-								height="50"
-								width="50">
-								<circle class="progress-ring__circle"
-									stroke="white"
-									stroke-width="2"
-									fill="transparent"
-									r="15"
-									cx="25"
-									cy="25" />
-							</svg>
-						</button>
+						<!-- Progress circle, css animated -->
+						<svg v-if="playing"
+							class="progress-ring"
+							height="50"
+							width="50">
+							<circle class="progress-ring__circle"
+								stroke="white"
+								stroke-width="2"
+								fill="transparent"
+								r="15"
+								cx="25"
+								cy="25" />
+						</svg>
+					</button>
 
-						<!-- Actions menu -->
-						<Actions class="header-actions">
-							<!-- @slot List of actions to show -->
-							<slot name="actions" />
-						</Actions>
+					<!-- Actions menu -->
+					<Actions class="header-actions">
+						<!-- @slot List of actions to show -->
+						<slot name="actions" />
+					</Actions>
 
-						<!-- Close modal -->
-						<Actions v-if="canClose" class="header-close">
-							<ActionButton @click="close">
-								<template #icon>
-									<Close :size="iconSize" title="" decorative />
-								</template>
-								{{ t('Close') }}
-							</ActionButton>
-						</Actions>
-					</div>
+					<!-- Close modal -->
+					<Actions v-if="canClose" class="header-close">
+						<ActionButton @click="close">
+							<template #icon>
+								<Close :size="iconSize" title="" decorative />
+							</template>
+							{{ t('Close') }}
+						</ActionButton>
+					</Actions>
 				</div>
 			</transition>
 
@@ -189,11 +180,11 @@
 					@mousedown.self="close">
 					<!-- Navigation button -->
 					<transition name="fade-visibility">
-						<a v-show="hasPrevious && !clearView"
+						<a v-show="hasPrevious"
 							class="prev"
 							href="#"
 							:class="{
-								invisible: clearView || !hasPrevious
+								invisible: !hasPrevious
 							}"
 							@click.prevent.stop="previous">
 							<span class="icon-previous">
@@ -213,11 +204,11 @@
 
 					<!-- Navigation button -->
 					<transition name="fade-visibility">
-						<a v-show="hasNext && !clearView"
+						<a v-show="hasNext"
 							class="next"
 							href="#"
 							:class="{
-								invisible: clearView || !hasNext
+								invisible: !hasNext
 							}"
 							@click.prevent.stop="next">
 							<span class="icon-next">
@@ -305,10 +296,6 @@ export default {
 			type: Boolean,
 			default: false,
 		},
-		clearViewDelay: {
-			type: Number,
-			default: -1,
-		},
 		/**
 		 * Declare the slide interval
 		 */
@@ -373,8 +360,6 @@ export default {
 		return {
 			mc: null,
 			showModal: false,
-			clearView: false,
-			clearViewTimeout: null,
 			playing: false,
 			slideshowTimeout: null,
 			iconSize: 24,
@@ -426,7 +411,6 @@ export default {
 		this.showModal = true
 
 		// init clear view
-		this.handleMouseMove()
 		this.useFocusTrap()
 		this.mc = new Hammer(this.$refs.mask)
 		this.mc.on('swipeleft swiperight', e => {
@@ -512,15 +496,6 @@ export default {
 					// swiping to right to go back to the previous item
 					this.previous(e)
 				}
-			}
-		},
-		handleMouseMove() {
-			if (this.clearViewDelay > 0) {
-				this.clearView = false
-				clearTimeout(this.clearViewTimeout)
-				this.clearViewTimeout = setTimeout(() => {
-					this.clearView = true
-				}, this.clearViewDelay)
 			}
 		},
 
