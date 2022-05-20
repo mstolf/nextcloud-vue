@@ -116,8 +116,7 @@ Just set the `pinned` prop.
 			'app-navigation-entry--opened': opened,
 			'app-navigation-entry--collapsible': collapsible,
 		}">
-		<!-- Navigation item, can be either an <li> or a <router-link> depending on the props -->
-		<div v-bind="navElement"
+		<nav-element v-bind="navElement"
 			:class="{
 				'app-navigation-entry--no-icon': !isIconShown,
 				'app-navigation-entry--pinned': pinned,
@@ -196,7 +195,7 @@ Just set the `pinned` prop.
 
 			<!-- Anything (virtual) that should be mounted in the component, like a related modal -->
 			<slot name="extra" />
-		</div>
+		</nav-element>
 		<!-- Children elements -->
 		<ul v-if="canHaveChildren && hasChildren" class="app-navigation-entry__children">
 			<slot />
@@ -403,18 +402,17 @@ export default {
 			}
 		},
 		// This is used to decide which outer element type to use
-		// li or router-link
 		navElement() {
 			if (this.to) {
 				return {
-					is: 'router-link',
-					tag: 'li',
+					is: 'div',
+					tag: 'div',
 					to: this.to,
 					exact: this.exact,
 				}
 			}
 			return {
-				is: 'li',
+				is: 'div',
 			}
 		},
 		isActive() {
