@@ -91,6 +91,7 @@ export default {
 	&__header {
 		box-sizing: border-box;
 		background-color: var(--color-main-background);
+		border-radius: var(--border-radius-large);
 
 		.settings-button {
 			display: flex;
@@ -102,17 +103,18 @@ export default {
 			background-color: var(--color-main-background);
 			box-shadow: none;
 			border: 0;
-			border-radius: 0;
 			text-align: left;
 			font-weight: normal;
 			font-size: 100%;
 			color: var(--color-main-text);
 			padding-right: 14px;
 			line-height: $clickable-area;
+			border-radius: var(--border-radius-large);
 
 			&:hover,
 			&:focus {
 				background-color: var(--color-background-hover);
+				border-radius: var(--border-radius-large);
 			}
 
 			&__icon {
