@@ -26,6 +26,9 @@ msgstr ""
 msgid "Cancel changes"
 msgstr ""
 
+msgid "Change title"
+msgstr ""
+
 msgid "Choose"
 msgstr ""
 
@@ -45,6 +48,9 @@ msgid "Edit item"
 msgstr ""
 
 msgid "External documentation for {title}"
+msgstr ""
+
+msgid "Favorite"
 msgstr ""
 
 msgid "Flags"
